@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Venv
+.venv/
+venv/
+
+# Дубликат логов пингера
+logs/
+
+# Docker
+*.log

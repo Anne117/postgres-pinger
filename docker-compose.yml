@@ -1,0 +1,38 @@
+services:
+  db:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.db
+    image: postgres18_ru:latest
+    container_name: pinger_db
+    restart: unless-stopped
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    environment:
+      POSTGRES_DB: appdb
+      POSTGRES_USER: app_admin
+      POSTGRES_PASSWORD: adminsecret
+      LANG: ru_RU.UTF-8
+      LC_ALL: ru_RU.UTF-8
+      LC_CTYPE: ru_RU.UTF-8
+    ports:
+      - "5433:5432"
+    volumes:
+      - "./docker/postgresql.conf:/etc/postgresql/postgresql.conf:ro"
+      - "./docker/init.sql:/docker-entrypoint-initdb.d/init.sql:ro"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app_admin -d appdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  pinger:
+    build: .
+    image: postgres-pinger:0.1.0
+    env_file:
+      - ./pinger.env
+    volumes:
+      # Публикуем файл-дубликат логов в папку ./logs
+      - ./logs:/var/log
+    depends_on:
+      db:
+        condition: service_healthy

@@ -1,0 +1,14 @@
+# Образ БД: PostgreSQL 18 + сгенерированная локаль ru_RU.UTF-8.
+FROM postgres:18
+
+# Генерируем локаль ru_RU.UTF-8 (в базовом образе она не установлена).
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends locales; \
+    sed -i '/ru_RU.UTF-8/s/^# //g' /etc/locale.gen; \
+    locale-gen; \
+    rm -rf /var/lib/apt/lists/*
+
+ENV LANG="ru_RU.UTF-8" \
+    LC_ALL="ru_RU.UTF-8" \
+    LC_CTYPE="ru_RU.UTF-8"
