@@ -14,6 +14,10 @@
 ## Быстрый старт через Docker Compose
 
 ```bash
+# создаём локальные env-файлы с паролями (в Git они не попадают)
+cp db.env.example db.env
+cp pinger.env.example pinger.env
+
 # соберёт образы (БД PostgreSQL 18 + пингер) и поднимет оба сервиса
 docker compose up --build -d
 
@@ -21,8 +25,10 @@ docker compose up --build -d
 docker compose logs -f pinger
 ```
 
-Compose использует `env_file: ./pinger.env` для передачи переменных среды
-(пункты 1.5–1.7). Дубликат логов при этом пишется в `./logs/pinger.log`
+Compose использует `env_file: ./db.env` для учётных данных PostgreSQL и
+`env_file: ./pinger.env` для переменных среды пингера (пункты 1.5–1.7).
+Пароли есть только в этих двух локальных файлах (`db.env`, `pinger.env`),
+они перечислены в `.gitignore`. Дубликат логов пишется в `./logs/pinger.log`
 (монтируется из `/var/log` контейнера).
 
 ### Тегированный образ
@@ -44,7 +50,8 @@ docker build -t postgres-pinger:0.1.0 .
    Пример «вручную»:
    ```bash
    # первый запуск без БД -> ошибки в stderr, но процесс продолжает цикл
-   PINGER_INTERVAL=5 PGUSER=app_user PGPASSWORD=user_secret python src/pinger.py --config config/app.conf
+   PINGER_INTERVAL=5 PGUSER=app_user PGPASSWORD="$(grep '^APP_DB_PASSWORD=' db.env | cut -d= -f2)" \
+     python src/pinger.py --config config/app.conf
    ```
    затем поднимите БД (`docker compose up -d db`) и через `PINGER_INTERVAL` появится `[OK]`.
 
@@ -66,16 +73,17 @@ docker build -t postgres-pinger:0.1.0 .
 ## Структура
 
 ```
-├── docker-compose.yml               # БД + пингер, env_file -> ./pinger.env
+├── docker-compose.yml               # БД + пингер, env_file -> ./db.env, ./pinger.env
 ├── docker/
 │   ├── Dockerfile.db                # PostgreSQL 18 + локаль ru_RU.UTF-8
 │   ├── postgresql.conf              # конфиг СУБД (scram-sha-256 и т.п.)
-│   └── init.sql                     # создаёт app_user с USAGE на public
+│   └── init.sh                      # создаёт app_user из APP_DB_* (без пароля в коде)
 ├── config/
 │   └── app.conf                     # статические настройки подключения (TOML)
 ├── src/
 │   └── pinger.py                    # основной сервис (Python 3.11+, psycopg 3)
-├── pinger.env                       # пример значений переменных среды (1.5–1.7)
+├── db.env.example                   # шаблон учётных данных PostgreSQL (копия -> db.env)
+├── pinger.env.example               # шаблон переменных среды пингера (копия -> pinger.env)
 ├── Dockerfile                       # образ пингера (тег 0.1.0)
 ├── requirements.txt
 └── README.md
@@ -85,6 +93,6 @@ docker build -t postgres-pinger:0.1.0 .
 
 ```bash
 pip install -r requirements.txt
-PINGER_INTERVAL=300 PGUSER=app_user PGPASSWORD=user_secret \
+PINGER_INTERVAL=300 PGUSER=app_user PGPASSWORD=<пароль из db.env> \
   python src/pinger.py --config config/app.conf
 ```

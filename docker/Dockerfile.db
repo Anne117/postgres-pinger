@@ -1,7 +1,6 @@
-# Образ БД: PostgreSQL 18 + сгенерированная локаль ru_RU.UTF-8.
+# PostgreSQL 18 + локаль ru_RU.UTF-8.
 FROM postgres:18
 
-# Генерируем локаль ru_RU.UTF-8 (в базовом образе она не установлена).
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends locales; \
@@ -12,3 +11,6 @@ RUN set -eux; \
 ENV LANG="ru_RU.UTF-8" \
     LC_ALL="ru_RU.UTF-8" \
     LC_CTYPE="ru_RU.UTF-8"
+
+COPY init.sh /docker-entrypoint-initdb.d/10-init.sh
+RUN chmod 0755 /docker-entrypoint-initdb.d/10-init.sh

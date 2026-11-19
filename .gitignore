@@ -12,3 +12,7 @@ logs/
 
 # Docker
 *.log
+
+# Локальные env-файлы с паролями
+db.env
+pinger.env

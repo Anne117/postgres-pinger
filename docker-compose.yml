@@ -7,10 +7,9 @@ services:
     container_name: pinger_db
     restart: unless-stopped
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    env_file:
+      - ./db.env
     environment:
-      POSTGRES_DB: appdb
-      POSTGRES_USER: app_admin
-      POSTGRES_PASSWORD: adminsecret
       LANG: ru_RU.UTF-8
       LC_ALL: ru_RU.UTF-8
       LC_CTYPE: ru_RU.UTF-8
@@ -18,9 +17,8 @@ services:
       - "5433:5432"
     volumes:
       - "./docker/postgresql.conf:/etc/postgresql/postgresql.conf:ro"
-      - "./docker/init.sql:/docker-entrypoint-initdb.d/init.sql:ro"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U app_admin -d appdb"]
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
       interval: 5s
       timeout: 5s
       retries: 10
