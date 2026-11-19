@@ -1,18 +1,17 @@
-# Python
 __pycache__/
 *.py[cod]
 *.egg-info/
-
-# Venv
 .venv/
 venv/
-
-# Дубликат логов пингера
 logs/
-
-# Docker
 *.log
 
-# Локальные env-файлы с паролями
+# Локальные переменные и секреты
 db.env
 pinger.env
+.env
+
+# Локальные данные Vault (dev server использует in-memory storage,
+# но каталог монтируется по требованию задания)
+vault/data/*
+!vault/data/.gitkeep

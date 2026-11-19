@@ -23,14 +23,36 @@ services:
       timeout: 5s
       retries: 10
 
+  vault:
+    image: hashicorp/vault:latest
+    container_name: pinger_vault
+    restart: unless-stopped
+    cap_add:
+      - IPC_LOCK
+    command: server -dev -dev-listen-address=0.0.0.0:8200 -dev-root-token-id=dev-only-root-token
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: dev-only-root-token
+      VAULT_ADDR: http://127.0.0.1:8200
+    ports:
+      - "8200:8200"
+    volumes:
+      - "./vault/data:/vault/file"
+      - "./vault/policies:/vault/policies:ro"
+    healthcheck:
+      test: ["CMD-SHELL", "vault status -address=http://127.0.0.1:8200 >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   pinger:
     build: .
-    image: postgres-pinger:0.1.0
+    image: postgres-pinger-vault:0.2.0
     env_file:
       - ./pinger.env
     volumes:
-      # Публикуем файл-дубликат логов в папку ./logs
       - ./logs:/var/log
     depends_on:
       db:
+        condition: service_healthy
+      vault:
         condition: service_healthy
